@@ -1,0 +1,48 @@
+{
+  "pin": "1337",
+  "allowCustomCommands": true,
+  "commands": [
+    {
+      "id": "status",
+      "label": "OpenClaw Status",
+      "command": "openclaw status",
+      "icon": "🔍",
+      "category": "openclaw"
+    },
+    {
+      "id": "gateway-restart",
+      "label": "Restart Gateway",
+      "command": "openclaw gateway restart",
+      "icon": "🔄",
+      "category": "openclaw"
+    },
+    {
+      "id": "pm2-list",
+      "label": "PM2 List",
+      "command": "pm2 list",
+      "icon": "📋",
+      "category": "pm2"
+    },
+    {
+      "id": "pm2-restart",
+      "label": "Restart All Services",
+      "command": "pm2 restart all",
+      "icon": "♻️",
+      "category": "pm2"
+    },
+    {
+      "id": "disk-usage",
+      "label": "Disk Usage",
+      "command": "df -h /",
+      "icon": "💾",
+      "category": "system"
+    },
+    {
+      "id": "uptime",
+      "label": "Uptime",
+      "command": "uptime",
+      "icon": "⏱️",
+      "category": "system"
+    }
+  ]
+}
