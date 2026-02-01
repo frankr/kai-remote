@@ -1,13 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import { exec } from 'child_process';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const rootDir = join(__dirname, '..');
 const app = express();
-const PORT = process.env.PORT || 4003;
+const PORT = process.env.PORT || 4006;
 
 // Load config
 const config = JSON.parse(readFileSync(join(__dirname, 'config.json'), 'utf-8'));
@@ -74,6 +75,16 @@ app.post('/api/verify', (req, res) => {
     res.status(401).json({ valid: false });
   }
 });
+
+// Serve static files in production
+const distPath = join(rootDir, 'dist');
+if (existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // Catch-all for SPA routing
+  app.get('*', (req, res) => {
+    res.sendFile(join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 kai-remote server running on port ${PORT}`);
