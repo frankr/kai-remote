@@ -20,7 +20,14 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh; /* Mobile viewport fix */
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%; /* Prevent font scaling on iOS */
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app {
@@ -28,6 +35,9 @@ body {
   margin: 0 auto;
   padding: 16px;
   padding-bottom: 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Login Screen */

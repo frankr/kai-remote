@@ -8,10 +8,38 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 const app = express();
-const PORT = process.env.PORT || 4006;
+const PORT = process.env.PORT || 4004;
 
 // Load config
 const config = JSON.parse(readFileSync(join(__dirname, 'config.json'), 'utf-8'));
+
+// Security: IP filtering - only allow local network and Tailscale
+function isAllowedIP(req) {
+  const ip = req.socket?.remoteAddress || req.ip || '';
+  const forwarded = req.headers['x-forwarded-for'] || '';
+  const checkIP = forwarded.split(',')[0].trim() || ip;
+  const cleanIP = checkIP.replace(/^::ffff:/, '');
+  
+  const allowed = [
+    /^127\.0\.0\.1$/,
+    /^::1$/,
+    /^192\.168\.\d{1,3}\.\d{1,3}$/,
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$/,
+    /^100\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,  // Tailscale
+  ];
+  
+  return allowed.some(pattern => pattern.test(cleanIP));
+}
+
+// Apply IP filter to all requests
+app.use((req, res, next) => {
+  if (!isAllowedIP(req)) {
+    console.log(`[Security] Blocked request from: ${req.ip}`);
+    return res.status(403).send('Forbidden');
+  }
+  next();
+});
 
 app.use(cors());
 app.use(express.json());

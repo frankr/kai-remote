@@ -3,7 +3,7 @@ import './App.css';
 
 const API_URL = import.meta.env.PROD 
   ? '/api' 
-  : 'http://localhost:4003/api';
+  : 'http://localhost:4004/api';
 
 function App() {
   const [pin, setPin] = useState('');
