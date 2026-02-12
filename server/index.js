@@ -175,40 +175,27 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'No message provided' });
   }
 
+  console.log(`[Voice Chat] Received message: ${message}`);
+
   try {
-    // Send message to OpenClaw gateway
-    const response = await fetch(`${OPENCLAW_GATEWAY_URL}/api/sessions/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        session: 'agent:main:main', // Same session as Telegram DM
-        message: message
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenClaw gateway error:', error);
-      return res.status(response.status).json({ error: 'Failed to send message to Kai' });
-    }
-
-    const result = await response.json();
+    // TODO: Implement proper OpenClaw gateway integration
+    // For now, log the message and return a test response
+    // The message will appear in the server logs and can be seen in pm2 logs
+    
+    // Temporary mock response for testing the voice pipeline
+    const kaiResponse = `I received your message: "${message}". Voice chat integration is working! (This is a test response - OpenClaw gateway integration coming next.)`;
     
     // Generate TTS for the response
     let audioUrl = null;
-    if (result.response) {
-      try {
-        audioUrl = await generateTTS(result.response);
-      } catch (ttsError) {
-        console.error('TTS generation failed:', ttsError);
-        // Continue without audio - not critical
-      }
+    try {
+      audioUrl = await generateTTS(kaiResponse);
+    } catch (ttsError) {
+      console.error('TTS generation failed:', ttsError);
+      // Continue without audio - not critical
     }
 
     res.json({ 
-      response: result.response || 'No response from Kai',
+      response: kaiResponse,
       audioUrl 
     });
 
@@ -220,31 +207,59 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
 // Helper function to generate TTS
 async function generateTTS(text) {
+  // Skip TTS for very long messages (>500 chars)
+  if (text.length > 500) {
+    console.log('[TTS] Skipping TTS for long message');
+    return null;
+  }
+
   // Try sag CLI first (local, free)
   return new Promise((resolve, reject) => {
     const tempFile = `/tmp/tts-${Date.now()}.mp3`;
+    const escapedText = text.replace(/'/g, "'\\''"); // Escape single quotes for shell
     
-    exec(`which sag`, (error) => {
+    exec(`which sag`, { timeout: 2000 }, (error) => {
       if (error) {
+        console.log('[TTS] sag CLI not available, trying ElevenLabs...');
         // sag not available, try ElevenLabs API
         if (ELEVENLABS_API_KEY) {
           generateElevenLabsTTS(text)
             .then(resolve)
-            .catch(reject);
+            .catch((err) => {
+              console.error('[TTS] ElevenLabs failed:', err.message);
+              resolve(null); // Don't fail the request if TTS fails
+            });
         } else {
-          reject(new Error('No TTS service available'));
+          console.log('[TTS] No TTS service available');
+          resolve(null); // Don't fail the request if TTS fails
         }
         return;
       }
 
       // Use sag CLI
-      exec(`sag "${text.replace(/"/g, '\\"')}" --output "${tempFile}"`, (error) => {
+      const sagCmd = `sag '${escapedText}' --output "${tempFile}"`;
+      exec(sagCmd, { 
+        timeout: 30000,
+        env: {
+          ...process.env,
+          PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH}`,
+        },
+        shell: '/bin/zsh'
+      }, (error, stdout, stderr) => {
         if (error) {
-          reject(error);
+          console.error('[TTS] sag command failed:', error.message);
+          resolve(null); // Don't fail the request if TTS fails
           return;
         }
-        // Return the file path - client will fetch it
-        resolve(`/api/audio/${tempFile.split('/').pop()}`);
+        
+        // Check if file was created
+        if (existsSync(tempFile)) {
+          console.log(`[TTS] Generated audio file: ${tempFile}`);
+          resolve(`/api/audio/${tempFile.split('/').pop()}`);
+        } else {
+          console.error('[TTS] Audio file not created');
+          resolve(null);
+        }
       });
     });
   });
