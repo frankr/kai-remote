@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ChatInterface from './components/ChatInterface';
 import './App.css';
 
 const API_URL = import.meta.env.PROD 
@@ -13,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [customCmd, setCustomCmd] = useState('');
   const [error, setError] = useState('');
+  const [view, setView] = useState('commands'); // 'commands' or 'chat'
 
   // Check for saved PIN
   useEffect(() => {
@@ -133,11 +135,28 @@ function App() {
     );
   }
 
+  // Render chat interface if in chat mode
+  if (authenticated && view === 'chat') {
+    return (
+      <div className="app chat-mode">
+        <header>
+          <button className="back-btn" onClick={() => setView('commands')}>← Back</button>
+          <h1>💬 Chat with Kai</h1>
+          <button className="logout-btn" onClick={logout}>🚪</button>
+        </header>
+        <ChatInterface pin={pin} />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <header>
         <h1>🖥️ Kai Remote</h1>
-        <button className="logout-btn" onClick={logout}>🚪</button>
+        <div className="header-actions">
+          <button className="chat-btn" onClick={() => setView('chat')}>💬 Chat</button>
+          <button className="logout-btn" onClick={logout}>🚪</button>
+        </div>
       </header>
 
       <div className="commands-grid">

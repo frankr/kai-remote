@@ -98,12 +98,48 @@ header h1 {
   font-size: 1.4rem;
 }
 
-.logout-btn {
+.logout-btn, .chat-btn, .back-btn {
   background: transparent;
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
   padding: 8px;
+  color: var(--text);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.chat-btn {
+  font-size: 1rem;
+  padding: 8px 12px;
+  background: var(--accent);
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+}
+
+.back-btn {
+  font-size: 1rem;
+  padding: 8px;
+}
+
+/* Chat mode styling */
+.app.chat-mode {
+  max-width: 100%;
+  padding: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app.chat-mode header {
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 /* Commands Grid */
